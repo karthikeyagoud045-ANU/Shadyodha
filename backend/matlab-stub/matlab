@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Fake `matlab` binary for testing the child_process bridge without MATLAB.
+# Accepts: -batch "run_screening('<inputImage>','<outputDir>')"
+# Writes result.json + placeholder images into <outputDir>, exit 0.
+# ponytail: stub only, delete once Person A delivers run_screening.m.
+set -euo pipefail
+
+BATCH=""
+for arg in "$@"; do
+  case "$arg" in
+    -batch) continue ;;
+    *) BATCH="$arg" ;;
+  esac
+done
+
+INPUT=$(echo "$BATCH" | sed -n "s/.*run_screening('\([^']*\)'.*/\1/p")
+OUTPUT=$(echo "$BATCH" | sed -n "s/.*run_screening('[^']*','\([^']*\)'.*/\1/p")
+
+if [ -z "${OUTPUT:-}" ]; then
+  echo "matlab-stub: could not parse run_screening args from: $BATCH" >&2
+  exit 1
+fi
+
+mkdir -p "$OUTPUT"
+STUB_DIR="$(cd "$(dirname "$0")" && pwd)"
+MOCKS_DIR="$(cd "$STUB_DIR/../mocks" && pwd)"
+cp "$MOCKS_DIR/mockAIResult.json" "$OUTPUT/result.json"
+for f in gradcam overlay lesion_annotation; do
+  cp "$MOCKS_DIR/mockGradcam.png" "$OUTPUT/$f.png"
+done
+echo "matlab-stub: processed input=$INPUT output=$OUTPUT"
