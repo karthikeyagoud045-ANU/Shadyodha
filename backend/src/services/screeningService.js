@@ -24,13 +24,14 @@ async function transition(screening, to, userId, details) {
   return screening;
 }
 
-async function createScreening({ patientDocId, healthWorkerId, file }) {
+async function createScreening({ patientDocId, healthWorkerId, file, idempotencyKey }) {
   const relPath = path.join('uploads', 'original', file.filename).replace(/\\/g, '/');
   const screening = await Screening.create({
     patient: patientDocId,
     patientId: patientDocId,
     healthWorkerId,
     status: 'registered',
+    ...(idempotencyKey ? { idempotencyKey } : {}),
     uploadedImage: {
       fileName: file.originalname,
       filePath: relPath,

@@ -16,6 +16,7 @@ const referralRoutes = require('./routes/referral.routes');
 const followupRoutes = require('./routes/followup.routes');
 const simulationRoutes = require('./routes/simulation.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const auditRoutes = require('./routes/audit.routes');
 const healthRoutes = require('./routes/health.routes');
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/followups', followupRoutes);
 app.use('/api/simulation', simulationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/audit', auditRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Route not found', code: 'NOT_FOUND' });

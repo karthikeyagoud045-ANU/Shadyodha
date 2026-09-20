@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { success } = require('../utils/responseHelper');
 const FollowUp = require('../models/FollowUp');
 const Screening = require('../models/Screening');
+const { logAudit } = require('../services/auditService');
 
 async function resolveScreening(ref) {
   if (!ref) return null;
@@ -21,6 +22,7 @@ const create = asyncHandler(async (req, res) => {
     notes,
     createdBy: req.user._id
   });
+  logAudit(req, 'FOLLOWUP_CREATED', 'FollowUp', followup._id);
   return success(res, { followup }, 'Follow-up scheduled', 201);
 });
 

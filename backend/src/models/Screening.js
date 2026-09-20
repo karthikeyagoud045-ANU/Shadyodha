@@ -28,6 +28,7 @@ const auditEntrySchema = new mongoose.Schema(
 const screeningSchema = new mongoose.Schema(
   {
     screeningId: { type: String, unique: true },
+    idempotencyKey: { type: String, unique: true, sparse: true },
     patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
     patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient' },
     healthWorkerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

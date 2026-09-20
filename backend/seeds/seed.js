@@ -66,11 +66,19 @@ async function seed() {
       triage: { priority: 'URGENT', action: 'IMMEDIATE_REFERRAL', isReferable: true, recommendedTimeline: 'Immediate ophthalmologist review required' },
       review: { assignedTo: doctor._id, status: 'confirmed', decision: 'confirmed', clinicalNote: 'Seed review', reviewedAt: new Date() },
       auditTrail: [{ userId: asha2._id, action: 'SCREENING_CREATED', details: 'Seed data' }]
+    },
+    {
+      patient: patients[3]._id,
+      healthWorkerId: asha2._id,
+      status: 'quality_failed',
+      uploadedImage: { fileName: 'fundus4.jpg', filePath: 'uploads/original/fundus4.jpg', fileSize: 28000, mimeType: 'image/jpeg', uploadTimestamp: new Date() },
+      qualityAssessment: { gradable: false, score: 0.32, focusScore: 0.3, illuminationScore: 0.45, fovPercentage: 55, issues: ['poor_focus'], recommendation: 'Recapture requested: poor focus, retake image in good lighting' },
+      auditTrail: [{ userId: asha2._id, action: 'STATUS_QUALITY_FAILED', details: 'Seed data: pending recapture' }]
     }
   ]);
 
   // eslint-disable-next-line no-console
-  console.log(`Seeded: admin ${admin.email}, workers, doctor ${doctor.email}, 5 patients, 3 screenings`);
+  console.log(`Seeded: admin ${admin.email}, workers, doctor ${doctor.email}, 5 patients, 4 screenings`);
   process.exit(0);
 }
 

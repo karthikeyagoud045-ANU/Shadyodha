@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { success } = require('../utils/responseHelper');
 const Screening = require('../models/Screening');
 const { transition } = require('../services/screeningService');
+const { logAudit } = require('../services/auditService');
 
 const queue = asyncHandler(async (req, res) => {
   const screenings = await Screening.find({ status: 'review_pending', 'triage.isReferable': true })
@@ -46,6 +47,7 @@ const decide = asyncHandler(async (req, res) => {
   await s.save();
   await transition(s, 'review_completed', req.user._id, `Review decision: ${status}`);
   await s.populate('patient');
+  logAudit(req, 'REVIEW_DECISION', 'Screening', s._id, { decision: status });
   return success(res, { screening: s }, 'Review recorded');
 });
 

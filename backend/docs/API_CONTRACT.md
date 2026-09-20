@@ -59,6 +59,10 @@ curl -X POST localhost:5001/api/screenings \
 → `201 { "data": { "screening": { "_id": "...", "screeningId": "SCR-2026-12345", "status": "image_uploaded", ... } } }`
 No file → `400 UPLOAD_ERROR`. Non-image → `400 UPLOAD_ERROR`.
 
+**Offline-sync idempotency:** send `Idempotency-Key: <client-uuid>` with the
+upload (Person C's offline queue replays with the same key after reconnect).
+First upload → `201`; replay with the same key → `200 { "data": { "screening": {...same doc...}, "deduped": true } }`, no re-create.
+
 ### GET /api/screenings?status=&limit=&page= (any auth; health_worker sees own only)
 
 ### GET /api/screenings/:id (any auth)
@@ -151,6 +155,14 @@ Wrong state (not `review_pending`) → `400 STATE_ERROR`.
 → `{ "data": { "results": { "dailyThroughput": 0, "averageWaitTimeMin": 0, "maxQueueLength": 0, "aiUtilizationPct": 0, "doctorUtilizationPct": 0, "referralBacklog": 0, "bottleneck": "CAMERA|BANDWIDTH|DOCTOR|NONE" }, "runId": "..." } }`
 
 ### GET /api/simulation/results → `{ "data": { "latest": {...}, "runs": [...] } }`
+
+## Audit (admin only)
+
+### GET /api/audit?limit=20&offset=0
+→ `200 { "data": { "logs": [{ "_id": "...", "userId": { "_id": "...", "name": "ASHA Worker 1", "role": "health_worker" }, "action": "SCREENING_CREATED", "resourceType": "Screening", "resourceId": "...", "ipAddress": "::1", "timestamp": "..." }], "total": 42, "limit": 20, "offset": 0 } }`
+Actions logged: `USER_REGISTER`, `USER_LOGIN`, `SCREENING_CREATED`,
+`SCREENING_ANALYZED`, `REVIEW_DECISION`, `REFERRAL_CREATED`, `FOLLOWUP_CREATED`.
+Non-admin → `403 FORBIDDEN`.
 
 ## Health
 

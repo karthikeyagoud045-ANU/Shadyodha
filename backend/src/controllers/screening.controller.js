@@ -5,6 +5,7 @@ const Referral = require('../models/Referral');
 const patientService = require('../services/patientService');
 const screeningService = require('../services/screeningService');
 const { runPipeline } = require('../agents/orchestrator');
+const { logAudit } = require('../services/auditService');
 
 function resolvePatientRef(body) {
   return body.patientId || body.patient || body.patientDocId || null;
@@ -22,12 +23,21 @@ const create = asyncHandler(async (req, res) => {
   if (!patient) {
     return res.status(404).json({ success: false, error: 'Patient not found', code: 'NOT_FOUND' });
   }
+  const idempotencyKey = req.headers['idempotency-key'];
+  if (idempotencyKey) {
+    const existing = await Screening.findOne({ idempotencyKey }).populate('patient');
+    if (existing) {
+      return success(res, { screening: existing, deduped: true }, 'Duplicate request, returning existing screening');
+    }
+  }
   const screening = await screeningService.createScreening({
     patientDocId: patient._id,
     healthWorkerId: req.user._id,
-    file: req.file
+    file: req.file,
+    idempotencyKey
   });
   await screening.populate('patient');
+  logAudit(req, 'SCREENING_CREATED', 'Screening', screening._id);
   return success(res, { screening }, 'Screening created', 201);
 });
 
@@ -62,6 +72,7 @@ const analyze = asyncHandler(async (req, res) => {
   }
   const updated = await runPipeline(s._id, req.user._id);
   await updated.populate('patient');
+  logAudit(req, 'SCREENING_ANALYZED', 'Screening', s._id, { status: updated.status });
   return success(res, { screening: updated }, 'Analysis completed');
 });
 

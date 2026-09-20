@@ -4,6 +4,7 @@ const Referral = require('../models/Referral');
 const Screening = require('../models/Screening');
 const { addAuditTrail } = require('../services/reportService');
 const { transition } = require('../services/screeningService');
+const { logAudit } = require('../services/auditService');
 
 async function findScreening(ref) {
   return (await Screening.findById(ref).catch(() => null))
@@ -31,6 +32,7 @@ const create = asyncHandler(async (req, res) => {
   if (screening.status === 'review_completed') {
     await transition(screening, 'referred', req.user._id, `Referred to ${referredTo}`);
   }
+  logAudit(req, 'REFERRAL_CREATED', 'Referral', referral._id);
   return success(res, { referral }, 'Referral created', 201);
 });
 

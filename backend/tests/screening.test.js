@@ -1,6 +1,7 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+const AuditLog = require('../src/models/AuditLog');
 
 let app;
 let mongo;
@@ -89,6 +90,37 @@ describe('Screening', () => {
       .set('Authorization', `Bearer ${outsider.body.data.token}`);
     expect(denied.status).toBe(403);
     expect(denied.body.code).toBe('FORBIDDEN');
+  }, 60000);
+
+  test('duplicate Idempotency-Key returns same doc, no re-create', async () => {
+    const key = `idem-${Date.now()}`;
+    const up = (f) => request(app).post('/api/screenings')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .set('Idempotency-Key', key)
+      .field('patientId', patientMongoId)
+      .attach('image', Buffer.alloc(300 * 1024, 0xff), f);
+    const first = await up('a.jpg');
+    expect(first.status).toBe(201);
+    const second = await up('b.jpg');
+    expect(second.status).toBe(200);
+    expect(second.body.data.deduped).toBe(true);
+    expect(second.body.data.screening._id).toBe(first.body.data.screening._id);
+  }, 60000);
+
+  test('GET /api/audit: non-admin 403, admin sees logs', async () => {
+    const denied = await request(app).get('/api/audit').set('Authorization', `Bearer ${workerToken}`);
+    expect(denied.status).toBe(403);
+    expect(denied.body.code).toBe('FORBIDDEN');
+
+    const admin = await request(app).post('/api/auth/register').send({
+      name: 'Audit Admin', email: `adm${Date.now()}@drishti.ai`, password: 'Admin@123', role: 'admin'
+    });
+    await AuditLog.create({ action: 'SEED_PROBE', resourceType: 'Test', timestamp: new Date() });
+    const res = await request(app).get('/api/audit?limit=5&offset=0')
+      .set('Authorization', `Bearer ${admin.body.data.token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.total).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.logs.length).toBeLessThanOrEqual(5);
   }, 60000);
 
   test('triage rules: grade mapping is deterministic', () => {
