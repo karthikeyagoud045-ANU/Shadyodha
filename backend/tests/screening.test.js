@@ -62,6 +62,35 @@ describe('Screening', () => {
     expect(analyzed.body.data.screening.triage.isReferable).toBe(true);
   }, 60000);
 
+  test('GET /api/screenings/:id/report returns structured report for owner', async () => {
+    const buf = Buffer.alloc(300 * 1024, 0xff);
+    const create = await request(app)
+      .post('/api/screenings')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .field('patientId', patientMongoId)
+      .attach('image', buf, 'fundus.jpg');
+    const id = create.body.data.screening._id;
+    await request(app).post(`/api/screenings/${id}/analyze`).set('Authorization', `Bearer ${workerToken}`);
+
+    const res = await request(app)
+      .get(`/api/screenings/${id}/report`)
+      .set('Authorization', `Bearer ${workerToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.report.screeningId).toMatch(/^SCR-/);
+    expect(res.body.data.report.patient.name).toBe('Test Patient');
+    expect(res.body.data.report.prediction.grade).toBe(2);
+    expect(res.body.data.report.disclaimer).toMatch(/ophthalmologist/);
+
+    const outsider = await request(app).post('/api/auth/register').send({
+      name: 'Other HW', email: `other${Date.now()}@drishti.ai`, password: 'Worker@123', role: 'health_worker'
+    });
+    const denied = await request(app)
+      .get(`/api/screenings/${id}/report`)
+      .set('Authorization', `Bearer ${outsider.body.data.token}`);
+    expect(denied.status).toBe(403);
+    expect(denied.body.code).toBe('FORBIDDEN');
+  }, 60000);
+
   test('triage rules: grade mapping is deterministic', () => {
     // eslint-disable-next-line global-require
     const { triage } = require('../src/agents/triageAgent');

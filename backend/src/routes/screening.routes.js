@@ -12,5 +12,6 @@ router.get('/', screeningController.list);
 router.get('/:id', screeningController.getById);
 router.post('/:id/analyze', authorize('health_worker', 'admin'), screeningController.analyze);
 router.get('/:id/result', screeningController.getResult);
+router.get('/:id/report', screeningController.getReport);
 
 module.exports = router;

@@ -70,6 +70,37 @@ Runs quality → AI → triage. Mock mode (~2s) returns grade 2.
 ### GET /api/screenings/:id/result (any auth)
 → `200 { "data": { "aiResult": {...}, "explainability": {...}, "triage": {...}, "qualityAssessment": {...}, "status": "..." } }`
 
+### GET /api/screenings/:id/report (owner health_worker, ophthalmologist, admin; other workers → `403 FORBIDDEN`)
+Structured clinical report JSON:
+```json
+{
+  "success": true,
+  "data": {
+    "report": {
+      "screeningId": "SCR-2026-57085",
+      "status": "referred",
+      "patient": { "patientId": "PAT-96334", "name": "Demo Judge", "age": 60, "gender": "male", "village": "Rampur", "district": "Nashik" },
+      "qualityAssessment": { "gradable": true, "score": 0.86, "...": "..." },
+      "prediction": { "grade": 2, "label": "Moderate NPDR", "confidence": 0.87, "referable": true, "...": "..." },
+      "explainability": {
+        "lesionCounts": [{ "type": "microaneurysm", "count": 42 }, { "type": "hemorrhage", "count": 15 }],
+        "imageUrls": {
+          "gradcam": "/uploads/results/SCR-2026-57085/gradcam.png",
+          "overlay": "/uploads/results/SCR-2026-57085/overlay.png",
+          "annotation": "/uploads/results/SCR-2026-57085/lesion_annotation.png"
+        }
+      },
+      "triage": { "priority": "MEDIUM", "isReferable": true, "...": "..." },
+      "review": { "status": "confirmed", "clinicalNote": "...", "reviewedAt": "..." },
+      "referral": { "referralId": "REF-87864", "priority": "HIGH", "referredTo": "District Hospital, Nashik", "status": "pending", "scheduledDate": null },
+      "generatedAt": "2026-09-20T13:30:00.000Z",
+      "disclaimer": "AI screening aid - final clinical decision rests with the ophthalmologist."
+    }
+  }
+}
+```
+`referral` is `null` when no referral exists yet. Prefix `imageUrls` with `http://localhost:5001` to fetch.
+
 ## Reviews (ophthalmologist, admin)
 
 ### GET /api/reviews/queue → `200 { "data": { "screenings": [...] } }` (status `review_pending`, referable)

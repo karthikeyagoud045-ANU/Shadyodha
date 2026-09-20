@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { success } = require('../utils/responseHelper');
 const Screening = require('../models/Screening');
+const Referral = require('../models/Referral');
 const patientService = require('../services/patientService');
 const screeningService = require('../services/screeningService');
 const { runPipeline } = require('../agents/orchestrator');
@@ -79,4 +80,51 @@ const getResult = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { create, list, getById, analyze, getResult };
+const getReport = asyncHandler(async (req, res) => {
+  const s = await Screening.findById(req.params.id).populate('patient').catch(() => null)
+    || await Screening.findOne({ screeningId: req.params.id }).populate('patient');
+  if (!s) {
+    return res.status(404).json({ success: false, error: 'Screening not found', code: 'NOT_FOUND' });
+  }
+  const isOwner = String(s.healthWorkerId) === String(req.user._id);
+  const privileged = req.user.role === 'ophthalmologist' || req.user.role === 'admin';
+  if (!isOwner && !privileged) {
+    return res.status(403).json({ success: false, error: 'Forbidden: not attached to this screening', code: 'FORBIDDEN' });
+  }
+  const referral = await Referral.findOne({ screeningId: s._id });
+  const lesions = (s.explainability && s.explainability.detectedLesions) || [];
+  const p = s.patient || {};
+  return success(res, {
+    report: {
+      screeningId: s.screeningId,
+      status: s.status,
+      patient: {
+        patientId: p.patientId,
+        name: p.name,
+        age: p.age,
+        gender: p.gender,
+        village: p.village,
+        district: p.district
+      },
+      qualityAssessment: s.qualityAssessment,
+      prediction: s.aiResult,
+      explainability: {
+        lesionCounts: lesions.map((l) => ({ type: l.type, count: l.count })),
+        imageUrls: {
+          gradcam: (s.explainability && s.explainability.gradcamUrl) || `/uploads/results/${s.screeningId}/gradcam.png`,
+          overlay: (s.explainability && s.explainability.overlayUrl) || `/uploads/results/${s.screeningId}/overlay.png`,
+          annotation: (s.explainability && s.explainability.annotationUrl) || `/uploads/results/${s.screeningId}/lesion_annotation.png`
+        }
+      },
+      triage: s.triage,
+      review: s.review,
+      referral: referral
+        ? { referralId: referral.referralId, priority: referral.priority, referredTo: referral.referredTo, status: referral.status, scheduledDate: referral.scheduledDate }
+        : null,
+      generatedAt: new Date().toISOString(),
+      disclaimer: 'AI screening aid - final clinical decision rests with the ophthalmologist.'
+    }
+  });
+});
+
+module.exports = { create, list, getById, analyze, getResult, getReport };
