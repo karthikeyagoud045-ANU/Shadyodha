@@ -11,7 +11,12 @@ const patientSchema = new mongoose.Schema(
     district: { type: String },
     isDiabetic: { type: Boolean, default: true },
     diabetesDurationYears: { type: Number, min: 0 },
-    registeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    registeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    contactPreferences: {
+      whatsappNumber: { type: String },
+      preferredLanguage: { type: String, enum: ['hi', 'en', 'ta'], default: 'hi' },
+      smsOptIn: { type: Boolean, default: false }
+    }
   },
   { timestamps: true }
 );

@@ -1,5 +1,11 @@
 const Joi = require('joi');
 
+const contactPreferences = Joi.object({
+  whatsappNumber: Joi.string().allow('', null),
+  preferredLanguage: Joi.string().valid('hi', 'en', 'ta').default('hi'),
+  smsOptIn: Joi.boolean().default(false)
+});
+
 const createPatientSchema = Joi.object({
   name: Joi.string().trim().min(2).max(100).required(),
   age: Joi.number().integer().min(0).max(130).required(),
@@ -8,7 +14,8 @@ const createPatientSchema = Joi.object({
   village: Joi.string().allow('', null),
   district: Joi.string().allow('', null),
   isDiabetic: Joi.boolean().default(true),
-  diabetesDurationYears: Joi.number().min(0).allow(null)
+  diabetesDurationYears: Joi.number().min(0).allow(null),
+  contactPreferences
 });
 
 const updatePatientSchema = Joi.object({
@@ -19,7 +26,8 @@ const updatePatientSchema = Joi.object({
   village: Joi.string().allow('', null),
   district: Joi.string().allow('', null),
   isDiabetic: Joi.boolean(),
-  diabetesDurationYears: Joi.number().min(0).allow(null)
+  diabetesDurationYears: Joi.number().min(0).allow(null),
+  contactPreferences
 }).min(1);
 
 module.exports = { createPatientSchema, updatePatientSchema };

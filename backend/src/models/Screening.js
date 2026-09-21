@@ -69,7 +69,8 @@ const screeningSchema = new mongoose.Schema(
       priority: { type: String, enum: ['ROUTINE', 'LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
       action: String,
       isReferable: Boolean,
-      recommendedTimeline: String
+      recommendedTimeline: String,
+      routingFlag: String
     },
     review: {
       assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

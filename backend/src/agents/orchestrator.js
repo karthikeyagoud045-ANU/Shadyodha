@@ -1,7 +1,10 @@
 const Screening = require('../models/Screening');
+const Referral = require('../models/Referral');
+const FollowUp = require('../models/FollowUp');
+const SimulationRun = require('../models/SimulationRun');
 const { assessQuality } = require('./qualityAgent');
 const { analyzeImage } = require('./retinaAgent');
-const { triage } = require('./triageAgent');
+const { triage, applyContext } = require('./triageAgent');
 
 function audit(screening, userId, action, details) {
   screening.auditTrail.push({ timestamp: new Date(), userId, action, details });
@@ -56,6 +59,18 @@ async function runPipeline(screeningId, userId) {
   const grade = aiOutput.prediction.grade;
   const t = triage(grade);
 
+  // v1.2 context: patient history + system load (priority/routing only, never isReferable/grade)
+  const patientRef = screening.patient || screening.patientId;
+  const [missedRefs, overdueFus, latestSim] = await Promise.all([
+    Referral.countDocuments({ $or: [{ patient: patientRef }, { patientId: patientRef }], status: 'missed' }),
+    FollowUp.countDocuments({ $or: [{ patient: patientRef }, { patientId: patientRef }], status: 'overdue' }),
+    SimulationRun.findOne().sort({ createdAt: -1 }).lean(),
+  ]);
+  const { triage: ctx, reasons } = applyContext(t, {
+    missedReferrals: missedRefs + overdueFus,
+    doctorUtilizationPct: latestSim?.results?.doctorUtilizationPct ?? null,
+  });
+
   screening.aiResult = {
     grade,
     label: aiOutput.prediction.label,
@@ -73,17 +88,19 @@ async function runPipeline(screeningId, userId) {
     detectedLesions: aiOutput.explainability.detectedLesions
   };
   screening.triage = {
-    priority: t.priority,
-    action: t.action,
-    isReferable: t.isReferable,
-    recommendedTimeline: t.recommendedTimeline
+    priority: ctx.priority,
+    action: ctx.action,
+    isReferable: ctx.isReferable,
+    recommendedTimeline: ctx.recommendedTimeline,
+    ...(ctx.routingFlag ? { routingFlag: ctx.routingFlag } : {})
   };
   screening.status = 'ai_completed';
-  audit(screening, userId, 'STATUS_AI_COMPLETED', `Grade ${grade} (${t.priority})`);
+  audit(screening, userId, 'STATUS_AI_COMPLETED', `Grade ${grade} (${ctx.priority})`);
+  reasons.forEach((r) => audit(screening, userId, 'TRIAGE_CONTEXT_RULE', r));
   await screening.save();
 
   // 4. Route by referability
-  if (t.isReferable) {
+  if (ctx.isReferable) {
     screening.status = 'review_pending';
     audit(screening, userId, 'STATUS_REVIEW_PENDING', 'Queued for ophthalmologist review');
   } else {

@@ -2,6 +2,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const { success } = require('../utils/responseHelper');
 const Referral = require('../models/Referral');
 const Screening = require('../models/Screening');
+const Patient = require('../models/Patient');
+const { onReferralCreated } = require('../services/engagementAgent');
 const { addAuditTrail } = require('../services/reportService');
 const { transition } = require('../services/screeningService');
 const { logAudit } = require('../services/auditService');
@@ -29,6 +31,10 @@ const create = asyncHandler(async (req, res) => {
     createdBy: req.user._id
   });
   await addAuditTrail(screening._id, req.user._id, 'REFERRAL_CREATED', `Referral ${referral.referralId} to ${referredTo}`);
+  const patient = await Patient.findById(screening.patient || screening.patientId);
+  if (patient) {
+    await onReferralCreated({ patient, screening, referral });
+  }
   if (screening.status === 'review_completed') {
     await transition(screening, 'referred', req.user._id, `Referred to ${referredTo}`);
   }

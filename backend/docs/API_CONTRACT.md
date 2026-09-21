@@ -168,6 +168,54 @@ Non-admin → `403 FORBIDDEN`.
 
 ### GET /api/health (public) → `200 { "success": true, "data": { "status": "ok", "service": "drishti-ai-backend", "time": "..." } }`
 
+### GET /api/health/extended (admin) → uptime, DB status, collections, memory, env, mockAI flag, request count. `403` for non-admin.
+
+## Model metrics (clinical validation)
+
+PS requirement: ICDR severity scale Levels 0-4 (no DR → proliferative DR),
+referable = Level 2+, sensitivity >90%, specificity >85% for referable DR.
+The model card is STORED and SERVED here so judges can verify compliance live.
+
+### POST /api/model/metrics (admin)
+```json
+{ "modelVersion": "drishti-resnet101-v1",
+  "referableMetrics": { "sensitivity": 0.93, "specificity": 0.88, "auc": 0.95 },
+  "operatingPoint": { "threshold": 0.5, "tunedOn": "valid" },
+  "artifacts": { "confusionMatrixUrl": "/uploads/model/.../cm.png", "rocUrl": "...", "calibrationUrl": "..." } }
+```
+→ `201 { "data": { "model": { ..., "referableMetrics": { "targets": { "sensitivityMin": 0.9, "specificityMin": 0.85, "met": true } } } } }`
+`targets.met` is computed server-side (`sens>=0.90 && spec>=0.85`), never trusted from client. Non-admin → `403`.
+
+### GET /api/model/metrics (any auth) → latest registered card. Empty → `404 NOT_FOUND`.
+### GET /api/model/metrics/:version (any auth) → card by version, else `404`.
+
+## Communications (patient engagement, mock transport)
+
+### GET /api/communications?patientId=&screeningId= → `200 { "data": { "communications": [...] } }`
+Admin/ophthalmologist see all; health_worker sees only comms for own screenings.
+Referral creation auto-drafts a localized WhatsApp message (`hi`/`en`/`ta` per
+`patient.contactPreferences.preferredLanguage`, default `hi`), status `QUEUED`.
+
+## Devices (field mobile app)
+
+### POST /api/devices/heartbeat (health_worker, admin)
+```json
+{ "deviceId": "HW-PHONE-01", "os": "Android 14", "appVersion": "1.2.0", "offlineQueueSize": 3, "lastGps": { "lat": 19.99, "lng": 73.78 } }
+```
+→ upsert by `deviceId` (two posts, same id → one doc updated).
+### GET /api/devices (admin) → list with worker name populated.
+
+## Patients — contact preferences (backward compatible)
+
+`contactPreferences: { whatsappNumber, preferredLanguage: hi|en|ta (default hi), smsOptIn (default false) }`
+— optional on create/update; old clients unaffected.
+
+## Ops notes
+
+- **Interactive docs:** `GET /api-docs` (Swagger UI, OpenAPI 3.0).
+- **Request IDs:** every response carries `X-Request-ID`; logs are JSON (pino) correlated by this ID.
+- **Rate limiting:** 500 req/15min global (`RATE_LIMITED` 429), 50 req/15min on `POST /api/auth/*`. Standard `RateLimit-*` headers returned.
+
 ## AI result shape (mock mode — identical keys in production)
 
 ```json

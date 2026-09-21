@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "5001:5001"
+    # Secrets come from .env (gitignored, never committed) — no URIs/passwords in this file.
+    env_file:
+      - .env
+    environment:
+      - PORT=5001
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET:-drishti-ai-secret-key-change-in-prod}
+      - USE_MOCK_AI=${USE_MOCK_AI:-true}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+    volumes:
+      - ./uploads:/app/uploads
