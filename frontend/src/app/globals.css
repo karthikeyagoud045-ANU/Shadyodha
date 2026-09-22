@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f4f6fc;
+  --foreground: #0f172a;
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Staggered cascading entrance animations */
+@keyframes boxEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.975);
+  }
+  60% {
+    opacity: 0.95;
+    transform: translateY(-2px) scale(1.004);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.stagger-1  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+.stagger-2  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+.stagger-3  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.19s both; }
+.stagger-4  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both; }
+.stagger-5  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.33s both; }
+.stagger-6  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.42s both; }
+.stagger-7  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.52s both; }
+.stagger-8  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.62s both; }
+.stagger-9  { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.72s both; }
+.stagger-10 { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.82s both; }
+.stagger-11 { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.92s both; }
+.stagger-12 { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.02s both; }
+.stagger-13 { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.12s both; }
+.stagger-14 { animation: boxEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.22s both; }
+
+/* Rising sparkline bars */
+@keyframes barRise {
+  0% {
+    transform: scaleY(0.1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.animate-bar-rise {
+  transform-origin: bottom;
+  animation: barRise 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Radar scan sweep */
+@keyframes radarSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar {
+  animation: radarSpin 6s linear infinite;
+}
+
+/* Glowing eye pulse */
+@keyframes eyeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.45)) drop-shadow(0 0 20px rgba(139, 92, 246, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(99, 102, 241, 0.8)) drop-shadow(0 0 32px rgba(139, 92, 246, 0.6));
+  }
+}
+
+.animate-eye-glow {
+  animation: eyeGlow 3.5s ease-in-out infinite;
+}
+
+/* Fluid mesh background animation */
+@keyframes fluidShift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8px, -6px) scale(1.05);
+  }
+}
+
+.animate-fluid {
+  animation: fluidShift 12s ease-in-out infinite alternate;
+}
+
+/* Card hover lift effect */
+.hover-lift {
+  transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -8px rgba(99, 102, 241, 0.12), 0 4px 14px -2px rgba(15, 23, 42, 0.04);
+}
+
+.btn-attract {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.btn-attract::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.28) 45%, transparent 70%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+
+.btn-attract:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.btn-attract:hover::after {
+  animation: shine 0.85s ease;
+}
+
+.btn-attract:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: scale(0);
+  transition: transform 0.25s ease;
+}
+
+.nav-item:hover .nav-dot,
+.nav-item[data-active="true"] .nav-dot {
+  transform: scale(1);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
