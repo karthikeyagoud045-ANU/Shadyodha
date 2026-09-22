@@ -18,3 +18,11 @@ ai/**/*.mat
 backend/matlab/models/*.mat
 backend/uploads/results/*
 !backend/uploads/results/.gitkeep
+
+# Atlas connection test files
+.env.atlas
+.env.atlas2
+
+# Upload artifacts
+backend/uploads/
+uploads/

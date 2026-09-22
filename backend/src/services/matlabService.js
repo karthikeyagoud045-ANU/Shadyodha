@@ -12,6 +12,20 @@ async function runMockAI(screeningId) {
   const raw = await fs.readFile(mockResultPath(), 'utf8');
   const mock = JSON.parse(raw);
   mock.screeningId = screeningId;
+  // Add full URLs for explainability images (same as real MATLAB path)
+  mock.explainability = mock.explainability || {};
+  mock.explainability.gradcamUrl = `/uploads/results/${screeningId}/gradcam.png`;
+  mock.explainability.overlayUrl = `/uploads/results/${screeningId}/overlay.png`;
+  mock.explainability.annotationUrl = `/uploads/results/${screeningId}/lesion_annotation.png`;
+  
+  // Create output directory and copy placeholder images (like stub does)
+  const outputDir = path.resolve(process.cwd(), env.uploadDir, 'results', String(screeningId));
+  await fs.mkdir(outputDir, { recursive: true });
+  const mocksDir = path.resolve(__dirname, '../../mocks');
+  await fs.copyFile(path.join(mocksDir, 'mockGradcam.png'), path.join(outputDir, 'gradcam.png'));
+  await fs.copyFile(path.join(mocksDir, 'mockGradcam.png'), path.join(outputDir, 'overlay.png'));
+  await fs.copyFile(path.join(mocksDir, 'mockGradcam.png'), path.join(outputDir, 'lesion_annotation.png'));
+  
   return mock;
 }
 
