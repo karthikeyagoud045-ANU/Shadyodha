@@ -4,3 +4,15 @@ node_modules/
 # macOS junk
 .DS_Store
 **/.DS_Store
+
+# Environment files
+.env
+*.env
+
+# MATLAB artifacts
+*.mat
+*.mex*
+ai/**/*.mat
+backend/matlab/models/*.mat
+backend/uploads/results/*
+!backend/uploads/results/.gitkeep

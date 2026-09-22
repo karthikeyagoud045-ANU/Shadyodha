@@ -1,0 +1,125 @@
+{
+  "modelVersion": "drishti-resnet101-v1",
+  "icdrScale": [
+    "No DR",
+    "Mild NPDR",
+    "Moderate NPDR",
+    "Severe NPDR",
+    "Proliferative DR"
+  ],
+  "referableDefinition": "grade >= 2 on ICDR scale",
+  "datasets": {
+    "train": "APTOS 2019",
+    "validation": "APTOS 2019 (15%)",
+    "test": "APTOS 2019 test split (15%)",
+    "external": "IDRiD"
+  },
+  "referableMetrics": {
+    "sensitivity": 1,
+    "specificity": 0.99694189602446481,
+    "ppv": 0.99551569506726456,
+    "npv": 1,
+    "auc": 1,
+    "prevalence": 0.40437158469945356,
+    "targets": {
+      "sensitivityMin": 0.9,
+      "specificityMin": 0.85,
+      "met": true
+    }
+  },
+  "operatingPoint": {
+    "score": 0.42,
+    "threshold": 0.42,
+    "tunedOn": "validation"
+  },
+  "perClass": [
+    {
+      "grade": 0,
+      "label": "No DR",
+      "precision": 1,
+      "recall": 0.9852,
+      "f1": 0.9926,
+      "support": 271
+    },
+    {
+      "grade": 1,
+      "label": "Mild NPDR",
+      "precision": 0.8871,
+      "recall": 0.9821,
+      "f1": 0.9322,
+      "support": 56
+    },
+    {
+      "grade": 2,
+      "label": "Moderate NPDR",
+      "precision": 0.9865,
+      "recall": 0.9733,
+      "f1": 0.9799,
+      "support": 150
+    },
+    {
+      "grade": 3,
+      "label": "Severe NPDR",
+      "precision": 0.9333,
+      "recall": 0.9655,
+      "f1": 0.9492,
+      "support": 29
+    },
+    {
+      "grade": 4,
+      "label": "Proliferative DR",
+      "precision": 1,
+      "recall": 0.9767,
+      "f1": 0.9882,
+      "support": 43
+    }
+  ],
+  "confusionMatrix": [
+    [
+      267,
+      4,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      55,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      3,
+      146,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      28,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      42
+    ]
+  ],
+  "calibration": {
+    "method": "isotonic_regression",
+    "eceBefore": 0.27869384268303049,
+    "eceAfter": 0.0038921754573032668
+  },
+  "artifacts": {
+    "confusionMatrixUrl": "confusion_matrix.png",
+    "rocUrl": "roc_curve.png",
+    "calibrationUrl": "calibration_plot.png"
+  },
+  "evaluatedAt": "2026-09-22T13:26:31"
+}
